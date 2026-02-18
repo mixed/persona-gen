@@ -1,6 +1,7 @@
 import type { LLMProvider } from '../llm/provider.js';
 import type { DiversityAxis } from '../types.js';
 import { buildAxisExtractionPrompt } from '../llm/prompts.js';
+import { axisExtractionSchema } from '../llm/schemas.js';
 import { safeJSONParseArray } from '../utils/json.js';
 
 export interface AxisExtractorOptions {
@@ -22,7 +23,10 @@ export class AxisExtractor {
    */
   async extract(expandedContext: string, numAxes: number): Promise<DiversityAxis[]> {
     const messages = buildAxisExtractionPrompt(expandedContext, numAxes, this.language);
-    const response = await this.llm.chat(messages, { responseFormat: 'json' });
+    const response = await this.llm.chat(messages, {
+      responseFormat: 'json',
+      responseSchema: axisExtractionSchema,
+    });
 
     const axes = safeJSONParseArray<DiversityAxis>(response, 'axis extraction response');
 

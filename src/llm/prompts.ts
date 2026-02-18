@@ -77,7 +77,7 @@ Focus on axes that:
 
 ${langInstruction}
 
-Respond with ONLY a valid JSON array, no additional text.`,
+Respond with a JSON object containing an "axes" array.`,
     },
     {
       role: 'user',
@@ -193,7 +193,7 @@ Return a JSON array of question objects with:
 
 ${langInstruction}
 
-Respond with ONLY valid JSON.`,
+Respond with a JSON object containing a "questions" array.`,
     },
     {
       role: 'user',

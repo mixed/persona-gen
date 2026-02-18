@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import type { LLMProvider } from './provider.js';
-import type { ChatMessage, LLMOptions } from '../types.js';
+import type { ChatMessage, LLMOptions, ResponseSchema } from '../types.js';
 
 export interface OpenAIProviderConfig {
   apiKey: string;
@@ -21,6 +21,25 @@ export class OpenAIProvider implements LLMProvider {
     this.model = config.model ?? 'gpt-4o-mini';
   }
 
+  private buildResponseFormat(options?: LLMOptions) {
+    if (options?.responseSchema) {
+      const schema = options.responseSchema;
+      return {
+        type: 'json_schema' as const,
+        json_schema: {
+          name: schema.name,
+          description: schema.description,
+          schema: schema.schema,
+          strict: schema.strict ?? true,
+        },
+      };
+    }
+    if (options?.responseFormat === 'json') {
+      return { type: 'json_object' as const };
+    }
+    return undefined;
+  }
+
   async chat(messages: ChatMessage[], options?: LLMOptions): Promise<string> {
     const response = await this.client.chat.completions.create({
       model: this.model,
@@ -30,10 +49,7 @@ export class OpenAIProvider implements LLMProvider {
       })),
       temperature: options?.temperature ?? 0.7,
       max_tokens: options?.maxTokens,
-      response_format:
-        options?.responseFormat === 'json'
-          ? { type: 'json_object' }
-          : undefined,
+      response_format: this.buildResponseFormat(options),
     });
 
     const content = response.choices[0]?.message?.content;

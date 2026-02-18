@@ -4,10 +4,18 @@ export interface ChatMessage {
   content: string;
 }
 
+export interface ResponseSchema {
+  name: string;
+  description?: string;
+  schema: Record<string, unknown>;
+  strict?: boolean;
+}
+
 export interface LLMOptions {
   temperature?: number;
   maxTokens?: number;
   responseFormat?: 'text' | 'json';
+  responseSchema?: ResponseSchema;
 }
 
 // === Core Domain Types ===

@@ -98,8 +98,16 @@ describe('safeJSONParseArray', () => {
     expect(result).toEqual([]);
   });
 
+  it('should unwrap single-key object containing an array', () => {
+    const result = safeJSONParseArray<{ id: number }>(
+      '{"axes": [{"id": 1}, {"id": 2}]}',
+      'test'
+    );
+    expect(result).toEqual([{ id: 1 }, { id: 2 }]);
+  });
+
   it('should throw JSONParseError on non-array JSON', () => {
-    expect(() => safeJSONParseArray('{"key": "value"}', 'test')).toThrow(
+    expect(() => safeJSONParseArray('{"key": "value", "other": 1}', 'test')).toThrow(
       JSONParseError
     );
   });
@@ -118,7 +126,7 @@ describe('safeJSONParseArray', () => {
 
   it('should include "Expected an array" in error for non-array', () => {
     try {
-      safeJSONParseArray('{}', 'test context');
+      safeJSONParseArray('{"a":1,"b":2}', 'test context');
       expect.fail('Should have thrown');
     } catch (error) {
       expect(error).toBeInstanceOf(JSONParseError);

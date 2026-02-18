@@ -1,6 +1,7 @@
 import type { LLMProvider } from '../llm/provider.js';
 import type { DiversityAxis, Persona, PersonaCoordinate } from '../types.js';
 import { buildPersonaExpansionPrompt } from '../llm/prompts.js';
+import { personaExpansionSchema } from '../llm/schemas.js';
 import { safeJSONParse } from '../utils/json.js';
 
 export interface PersonaExpanderOptions {
@@ -37,7 +38,10 @@ export class PersonaExpander {
     id: string
   ): Promise<Persona> {
     const messages = buildPersonaExpansionPrompt(context, axes, coordinates, this.language);
-    const response = await this.llm.chat(messages, { responseFormat: 'json' });
+    const response = await this.llm.chat(messages, {
+      responseFormat: 'json',
+      responseSchema: personaExpansionSchema,
+    });
 
     const parsed = safeJSONParse<PersonaLLMResponse>(response, 'persona expansion response');
 

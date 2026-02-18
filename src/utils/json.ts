@@ -38,9 +38,17 @@ export function safeJSONParse<T>(content: string, context: string): T {
 export function safeJSONParseArray<T>(content: string, context: string): T[] {
   const parsed = safeJSONParse<unknown>(content, context);
 
-  if (!Array.isArray(parsed)) {
-    throw new JSONParseError('Expected an array', context, content);
+  if (Array.isArray(parsed)) {
+    return parsed as T[];
   }
 
-  return parsed as T[];
+  // LLM이 { "key": [...] } 형태로 감싸서 응답한 경우 자동 언래핑
+  if (parsed !== null && typeof parsed === 'object') {
+    const values = Object.values(parsed as Record<string, unknown>);
+    if (values.length === 1 && Array.isArray(values[0])) {
+      return values[0] as T[];
+    }
+  }
+
+  throw new JSONParseError('Expected an array', context, content);
 }

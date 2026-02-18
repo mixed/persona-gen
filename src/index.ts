@@ -4,6 +4,7 @@
 export type {
   ChatMessage,
   LLMOptions,
+  ResponseSchema,
   Context,
   AxisAnchor,
   DiversityAxis,
@@ -54,6 +55,14 @@ export {
   buildPersonaExpansionPrompt,
   buildQuestionnairePrompt,
 } from './llm/prompts.js';
+
+// Schemas (for Structured Outputs)
+export {
+  axisExtractionSchema,
+  personaExpansionSchema,
+  questionnaireSchema,
+  personaResponseSchema,
+} from './llm/schemas.js';
 
 // Evolution / Optimizer
 export { SimpleOptimizer, type OptimizerConfig, type Optimizer } from './evolution/optimizer.js';

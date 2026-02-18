@@ -1,6 +1,7 @@
 import type { LLMProvider } from '../llm/provider.js';
 import type { DiversityAxis, Persona } from '../types.js';
 import { buildQuestionnairePrompt } from '../llm/prompts.js';
+import { questionnaireSchema, personaResponseSchema } from '../llm/schemas.js';
 import { safeJSONParse, safeJSONParseArray } from '../utils/json.js';
 
 export interface Question {
@@ -36,7 +37,10 @@ export class QuestionnaireGenerator {
     numQuestions: number = 10
   ): Promise<Question[]> {
     const messages = buildQuestionnairePrompt(context, axes, numQuestions, this.language);
-    const response = await this.llm.chat(messages, { responseFormat: 'json' });
+    const response = await this.llm.chat(messages, {
+      responseFormat: 'json',
+      responseSchema: questionnaireSchema,
+    });
 
     return safeJSONParseArray<Question>(response, 'questionnaire response');
   }
@@ -53,7 +57,10 @@ export class PersonaResponder {
 
   async respond(persona: Persona, questions: Question[]): Promise<PersonaResponse> {
     const prompt = this.buildResponsePrompt(persona, questions);
-    const response = await this.llm.chat(prompt, { responseFormat: 'json' });
+    const response = await this.llm.chat(prompt, {
+      responseFormat: 'json',
+      responseSchema: personaResponseSchema,
+    });
 
     const parsed = safeJSONParse<{ answers: Answer[] }>(response, 'persona response');
     return {

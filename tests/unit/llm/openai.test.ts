@@ -264,4 +264,106 @@ describe('OpenAIProvider', () => {
       );
     });
   });
+
+  describe('Structured Outputs (json_schema)', () => {
+    it('should use json_schema when responseSchema is provided', async () => {
+      await provider.chat(
+        [{ role: 'user', content: 'test' }],
+        {
+          responseSchema: {
+            name: 'test_schema',
+            description: 'A test schema',
+            schema: {
+              type: 'object',
+              properties: { items: { type: 'array', items: { type: 'string' } } },
+              required: ['items'],
+              additionalProperties: false,
+            },
+            strict: true,
+          },
+        }
+      );
+
+      expect(mockCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          response_format: {
+            type: 'json_schema',
+            json_schema: {
+              name: 'test_schema',
+              description: 'A test schema',
+              schema: {
+                type: 'object',
+                properties: { items: { type: 'array', items: { type: 'string' } } },
+                required: ['items'],
+                additionalProperties: false,
+              },
+              strict: true,
+            },
+          },
+        })
+      );
+    });
+
+    it('should prefer responseSchema over responseFormat json', async () => {
+      await provider.chat(
+        [{ role: 'user', content: 'test' }],
+        {
+          responseFormat: 'json',
+          responseSchema: {
+            name: 'priority_test',
+            schema: {
+              type: 'object',
+              properties: { value: { type: 'string' } },
+              required: ['value'],
+              additionalProperties: false,
+            },
+          },
+        }
+      );
+
+      const call = mockCreate.mock.calls[0][0];
+      expect(call.response_format.type).toBe('json_schema');
+    });
+
+    it('should default strict to true when not specified', async () => {
+      await provider.chat(
+        [{ role: 'user', content: 'test' }],
+        {
+          responseSchema: {
+            name: 'default_strict',
+            schema: {
+              type: 'object',
+              properties: { v: { type: 'number' } },
+              required: ['v'],
+              additionalProperties: false,
+            },
+          },
+        }
+      );
+
+      const call = mockCreate.mock.calls[0][0];
+      expect(call.response_format.json_schema.strict).toBe(true);
+    });
+
+    it('should respect strict: false', async () => {
+      await provider.chat(
+        [{ role: 'user', content: 'test' }],
+        {
+          responseSchema: {
+            name: 'non_strict',
+            schema: {
+              type: 'object',
+              properties: { data: { type: 'object' } },
+              required: ['data'],
+              additionalProperties: false,
+            },
+            strict: false,
+          },
+        }
+      );
+
+      const call = mockCreate.mock.calls[0][0];
+      expect(call.response_format.json_schema.strict).toBe(false);
+    });
+  });
 });
