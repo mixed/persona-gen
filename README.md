@@ -2,7 +2,7 @@
 
 Generate diverse synthetic personas at scale using quasi-random sampling and LLMs.
 
-Based on the paper ["Persona Generators: Generating Diverse Synthetic Personas at Scale"](https://arxiv.org/abs/example) by Paglieri et al.
+Based on the paper ["Persona Generators: Generating Diverse Synthetic Personas at Scale"](https://arxiv.org/abs/2602.03545) by Paglieri et al.
 
 ## Quick Start
 
