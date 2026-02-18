@@ -1,0 +1,60 @@
+[
+  {
+    "id": "tech-literacy",
+    "name": "Technology Literacy",
+    "description": "Ability to understand and use new technology",
+    "type": "continuous",
+    "anchors": [
+      { "value": 0, "label": "Tech-averse" },
+      { "value": 0.5, "label": "Average user" },
+      { "value": 1, "label": "Early adopter" }
+    ]
+  },
+  {
+    "id": "risk-tolerance",
+    "name": "Risk Tolerance",
+    "description": "Willingness to accept uncertainty with new technology",
+    "type": "continuous",
+    "anchors": [
+      { "value": 0, "label": "Very conservative" },
+      { "value": 0.5, "label": "Moderate" },
+      { "value": 1, "label": "Risk-seeking" }
+    ]
+  },
+  {
+    "id": "age-group",
+    "name": "Age Group",
+    "description": "Life stage affecting technology adoption patterns",
+    "type": "categorical",
+    "categories": ["18-24", "25-34", "35-44", "45-54", "55+"]
+  },
+  {
+    "id": "driving-frequency",
+    "name": "Driving Frequency",
+    "description": "How often the person drives",
+    "type": "continuous",
+    "anchors": [
+      { "value": 0, "label": "Rarely" },
+      { "value": 0.5, "label": "Weekly" },
+      { "value": 1, "label": "Daily" }
+    ]
+  },
+  {
+    "id": "residence-type",
+    "name": "Residence Type",
+    "description": "Living environment affecting AV infrastructure access",
+    "type": "categorical",
+    "categories": ["Urban", "Suburban", "Rural"]
+  },
+  {
+    "id": "economic-status",
+    "name": "Economic Status",
+    "description": "Financial ability to invest in new technology",
+    "type": "continuous",
+    "anchors": [
+      { "value": 0, "label": "Limited budget" },
+      { "value": 0.5, "label": "Middle income" },
+      { "value": 1, "label": "Affluent" }
+    ]
+  }
+]

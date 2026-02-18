@@ -1,0 +1,66 @@
+{
+  "context": {
+    "description": "Early adopters of autonomous vehicles",
+    "expanded": "Early adopters of autonomous vehicles comprise a diverse group..."
+  },
+  "axes": [
+    {
+      "id": "tech-literacy",
+      "name": "Technology Literacy",
+      "description": "Ability to understand and use new technology",
+      "type": "continuous",
+      "anchors": [
+        { "value": 0, "label": "Tech-averse" },
+        { "value": 1, "label": "Early adopter" }
+      ]
+    }
+  ],
+  "personas": [
+    {
+      "id": "persona-1",
+      "name": "Sarah Chen",
+      "coordinates": [
+        { "axisId": "tech-literacy", "rawValue": 0.85, "mappedValue": "Early adopter" }
+      ],
+      "description": "Sarah is a 32-year-old software engineer who works at a tech startup in San Francisco. She is always eager to try new technologies and often serves as the go-to person for tech advice among her friends and family.",
+      "traits": {
+        "occupation": "Software Engineer",
+        "location": "San Francisco",
+        "education": "Computer Science MS"
+      },
+      "behaviorPatterns": [
+        "Researches new technologies extensively before purchasing",
+        "Willing to tolerate early bugs in exchange for being first",
+        "Shares experiences on social media and tech forums"
+      ]
+    },
+    {
+      "id": "persona-2",
+      "name": "Robert Williams",
+      "coordinates": [
+        { "axisId": "tech-literacy", "rawValue": 0.35, "mappedValue": "Average user" }
+      ],
+      "description": "Robert is a 58-year-old retired teacher who is cautious about new technology but open to it if it solves a real problem. He's interested in autonomous vehicles primarily for safety and convenience as he ages.",
+      "traits": {
+        "occupation": "Retired Teacher",
+        "location": "Suburban Ohio",
+        "education": "Education BA"
+      },
+      "behaviorPatterns": [
+        "Asks family members for technology recommendations",
+        "Prefers thorough testing and proven reliability",
+        "Values simplicity and ease of use over features"
+      ]
+    }
+  ],
+  "metrics": {
+    "coverage": 0.72,
+    "convexHullVolume": 0.65,
+    "meanPairwiseDistance": 0.50,
+    "minPairwiseDistance": 0.50,
+    "dispersion": 0.28,
+    "klDivergence": 0.15,
+    "overall": 0.68
+  },
+  "generatedAt": "2024-01-15T10:30:00.000Z"
+}
