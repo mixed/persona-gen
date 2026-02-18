@@ -54,7 +54,7 @@ program
   .command('evaluate')
   .description('Evaluate diversity metrics for an existing population')
   .argument('<file>', 'Path to population JSON file')
-  .option('--embedding-mode <mode>', 'Embedding mode: coordinate or api', 'coordinate')
+  .option('--embedding-mode <mode>', 'Embedding mode: api or coordinate', 'api')
   .option('-o, --output <path>', 'Save updated file with metrics')
   .action(async (file: string, options: Record<string, string>) => {
     const opts: EvaluateOptions = {

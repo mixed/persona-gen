@@ -166,6 +166,23 @@ describe('CLI evaluate command', () => {
     expect(result.stdout).toContain('Coverage');
   });
 
+  it('should fallback to coordinate mode when API key is not set', async () => {
+    const result = await runCLI(['evaluate', testFile], {
+      env: { OPENAI_API_KEY: '' },
+    });
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toContain('falling back to coordinate mode');
+    expect(result.stdout).toContain('Embedding mode: coordinate');
+  });
+
+  it('should use coordinate mode when explicitly specified', async () => {
+    const result = await runCLI(['evaluate', testFile, '--embedding-mode', 'coordinate']);
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('Embedding mode: coordinate');
+    // No fallback warning when explicitly using coordinate
+    expect(result.stderr).not.toContain('falling back');
+  });
+
   it('should fail with non-existent file', async () => {
     const result = await runCLI(['evaluate', '/nonexistent/file.json']);
     expect(result.exitCode).toBe(1);

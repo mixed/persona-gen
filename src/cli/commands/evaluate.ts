@@ -27,19 +27,25 @@ export async function evaluateCommand(
     throw error;
   }
 
+  // Fallback to coordinate mode if API key is not available
+  let effectiveMode = options.embeddingMode;
+  if (effectiveMode === 'api') {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      console.warn('⚠ OPENAI_API_KEY not set — falling back to coordinate mode');
+      effectiveMode = 'coordinate';
+    }
+  }
+
   console.log(`\n📊 Evaluating population: ${filePath}`);
   console.log(`   Personas: ${population.personas.length}`);
   console.log(`   Axes: ${population.axes.length}`);
-  console.log(`   Embedding mode: ${options.embeddingMode}`);
+  console.log(`   Embedding mode: ${effectiveMode}`);
 
   // Extract points based on embedding mode
   let points: number[][];
-  if (options.embeddingMode === 'api') {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      printError('OPENAI_API_KEY environment variable is required for API embedding mode');
-      process.exit(1);
-    }
+  if (effectiveMode === 'api') {
+    const apiKey = process.env.OPENAI_API_KEY!;
     const provider = new OpenAIProvider({ apiKey });
     points = await getPersonaPoints(population.personas, 'api', provider);
   } else {
