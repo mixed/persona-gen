@@ -137,7 +137,7 @@ export class PersonaGenerator {
   /**
    * Evaluate diversity metrics for personas.
    */
-  evaluate(personas: { coordinates: { rawValue: number }[] }[]): DiversityMetrics {
+  async evaluate(personas: { coordinates: { rawValue: number }[] }[]): Promise<DiversityMetrics> {
     return this.pipeline.evaluate(personas);
   }
 

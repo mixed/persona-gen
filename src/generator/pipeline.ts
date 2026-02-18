@@ -15,6 +15,7 @@ import { PersonaExpander } from './persona-expander.js';
 import { HaltonSampler } from '../sampler/halton.js';
 import { mapCoordinates } from '../sampler/mapper.js';
 import { computeAllMetrics } from '../evaluation/metrics.js';
+import { getPersonaPoints } from '../evaluation/embedding.js';
 
 export interface PipelineOptions {
   language?: string;
@@ -91,10 +92,10 @@ export class Pipeline {
       mappedCoordinates
     );
 
-    // Step 6: Optionally compute metrics
+    // Step 6: Optionally compute metrics (using API embeddings)
     let metrics: DiversityMetrics | undefined;
     if (finalConfig.evaluateAfter) {
-      metrics = this.evaluate(personas);
+      metrics = await this.evaluate(personas);
     }
 
     return {
@@ -128,13 +129,10 @@ export class Pipeline {
   }
 
   /**
-   * Compute diversity metrics for a set of personas.
+   * Compute diversity metrics for a set of personas using API embeddings.
    */
-  evaluate(personas: EvaluablePersona[]): DiversityMetrics {
-    // Extract raw coordinates as points
-    const points = personas.map((p) =>
-      p.coordinates.map((c) => c.rawValue)
-    );
+  async evaluate(personas: EvaluablePersona[]): Promise<DiversityMetrics> {
+    const points = await getPersonaPoints(personas as Persona[], 'api', this.llm);
     return computeAllMetrics(points);
   }
 }
