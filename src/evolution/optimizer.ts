@@ -66,6 +66,23 @@ export class SimpleOptimizer {
       if (score >= scoreThreshold && meetsIndividual) {
         break;
       }
+
+      // Log retry reason
+      if (i < maxRetries) {
+        const reasons: string[] = [];
+        if (score < scoreThreshold) {
+          reasons.push(`overall ${score.toFixed(3)} < ${scoreThreshold}`);
+        }
+        if ((metrics?.convexHullVolume ?? 0) < 0.5) {
+          reasons.push(`convexHullVolume ${(metrics?.convexHullVolume ?? 0).toFixed(3)} < 0.5`);
+        }
+        if (normMeanPairwise < 0.5) {
+          reasons.push(`normMeanPairwise ${normMeanPairwise.toFixed(3)} < 0.5`);
+        }
+        console.warn(
+          `[Optimizer] Retry ${i + 1}/${maxRetries}: ${reasons.join(', ')}`
+        );
+      }
     }
 
     if (!bestPopulation) {
