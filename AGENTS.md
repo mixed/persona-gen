@@ -250,7 +250,7 @@ interface OptimizerResult { population: Population; iterations: number; bestScor
 
 | 파일 | 역할 |
 |------|------|
-| `optimizer.ts` | `SimpleOptimizer`: 다양성 점수 threshold 미만 시 1~3회 재시도 루프. `Optimizer` 인터페이스로 풀 구현 교체 가능 |
+| `optimizer.ts` | `SimpleOptimizer`: overall 점수 threshold 미만 또는 개별 메트릭(`convexHullVolume >= 0.5`, 정규화 `meanPairwiseDistance >= 0.5`) 미충족 시 최대 5회 재시도. `Optimizer` 인터페이스로 풀 구현 교체 가능 |
 | `mutator.ts` | `MutationStrategy` 인터페이스 + 4개 Mutator: `AxesCountMutator`, `PopulationSizeMutator`, `AxisDefinitionMutator`, `CompositeMutator` |
 
 ### 5.6 CLI (`src/cli/`)
@@ -385,6 +385,8 @@ persona-gen inspect <file>
 | KL Divergence | ↓ 낮을수록 좋음 | 균등분포와의 차이 (편향 정도) |
 
 `computeAllMetrics(points)` → 6가지 + `overall` 가중 종합 점수.
+
+**overall 가중치:** coverage(0.20), convexHullVolume(0.20), meanPairwiseDistance(0.15), minPairwiseDistance(0.15), dispersion(0.15), klDivergence(0.15) = 1.0
 
 **임베딩 모드:**
 - **좌표 기반** (기본): 페르소나의 quasi-random 좌표를 직접 사용. 비용 0, 결정론적

@@ -49,6 +49,10 @@
 - [x] Structured Outputs 스키마 (`schemas.ts`) + OpenAI `buildResponseFormat()` 통합
 - [x] `safeJSONParseArray` 자동 언래핑 로직
 - [x] `AGENTS.md` / `PLANNING.md` 분리
+- [x] 메트릭 가중치 조정 + 개별 메트릭 기반 재생성 조건 추가
+  - `convexHullVolume` 가중치 0.15→0.20, `meanPairwiseDistance` 0.20→0.15 교환
+  - Optimizer에서 `convexHullVolume >= 0.5` 및 정규화 `meanPairwiseDistance >= 0.5` 미충족 시 재생성
+  - `maxRetries` 기본값 2→5
 
 ---
 
