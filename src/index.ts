@@ -41,6 +41,7 @@ export {
   computeDispersion,
   computeKLDivergence,
   computeAllMetrics,
+  adaptiveEpsilon,
 } from './evaluation/metrics.js';
 export { getPersonaPoints, type EmbeddingMode } from './evaluation/embedding.js';
 

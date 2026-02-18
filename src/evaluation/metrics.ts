@@ -13,6 +13,55 @@ function euclideanDistance(a: number[], b: number[]): number {
 }
 
 /**
+ * Compute log-gamma using Lanczos approximation.
+ */
+function logGamma(z: number): number {
+  if (z < 0.5) {
+    // Reflection formula: Γ(z)Γ(1-z) = π/sin(πz)
+    return Math.log(Math.PI / Math.sin(Math.PI * z)) - logGamma(1 - z);
+  }
+  z -= 1;
+  const g = 7;
+  const c = [
+    0.99999999999980993,
+    676.5203681218851,
+    -1259.1392167224028,
+    771.32342877765313,
+    -176.61502916214059,
+    12.507343278686905,
+    -0.13857109526572012,
+    9.9843695780195716e-6,
+    1.5056327351493116e-7,
+  ];
+  let x = c[0];
+  for (let i = 1; i < g + 2; i++) {
+    x += c[i] / (z + i);
+  }
+  const t = z + g + 0.5;
+  return 0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t) - t + Math.log(x);
+}
+
+/**
+ * Compute adaptive epsilon for coverage metric based on dimensionality.
+ * Maintains the same volume ratio as epsilon=0.2 in 2D (~12.6% of unit hypercube).
+ *
+ * Formula: epsilon_d = (targetVolume × Γ(d/2+1) / π^(d/2))^(1/d)
+ * where targetVolume = π × referenceEpsilon² (2D ball volume)
+ */
+export function adaptiveEpsilon(dimensions: number, referenceEpsilon: number = 0.2): number {
+  // targetVolume = π × ref² (volume of 2D ball with radius=referenceEpsilon)
+  const targetVolume = Math.PI * referenceEpsilon * referenceEpsilon;
+
+  // Volume of d-ball with radius r: V_d(r) = π^(d/2) / Γ(d/2+1) × r^d
+  // Solving for r: r = (V × Γ(d/2+1) / π^(d/2))^(1/d)
+  const halfD = dimensions / 2;
+  const logNumerator = Math.log(targetVolume) + logGamma(halfD + 1);
+  const logDenominator = halfD * Math.log(Math.PI);
+
+  return Math.exp((logNumerator - logDenominator) / dimensions);
+}
+
+/**
  * Generate a random point in [0, 1]^d space.
  */
 function randomPoint(dimensions: number): number[] {
@@ -25,12 +74,13 @@ function randomPoint(dimensions: number): number[] {
  */
 export function computeCoverage(
   points: number[][],
-  epsilon: number = 0.2,
+  epsilon?: number,
   numTestPoints: number = 1000
 ): number {
   if (points.length === 0) return 0;
 
   const dimensions = points[0].length;
+  const effectiveEpsilon = epsilon ?? adaptiveEpsilon(dimensions);
   let covered = 0;
 
   for (let i = 0; i < numTestPoints; i++) {
@@ -38,7 +88,7 @@ export function computeCoverage(
     let isCovered = false;
 
     for (const point of points) {
-      if (euclideanDistance(testPoint, point) < epsilon) {
+      if (euclideanDistance(testPoint, point) < effectiveEpsilon) {
         isCovered = true;
         break;
       }

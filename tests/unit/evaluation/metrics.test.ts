@@ -7,6 +7,7 @@ import {
   computeDispersion,
   computeKLDivergence,
   computeAllMetrics,
+  adaptiveEpsilon,
 } from '../../../src/evaluation/metrics.js';
 
 describe('DiversityMetrics', () => {
@@ -222,6 +223,65 @@ describe('DiversityMetrics', () => {
       ];
       const metrics = computeAllMetrics(highDim);
       expect(metrics.overall).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should produce non-zero coverage in 6D with adaptive epsilon', () => {
+      // Generate well-distributed 6D points using a grid-like pattern
+      const points6D: number[][] = [];
+      for (let i = 0; i < 20; i++) {
+        points6D.push(Array.from({ length: 6 }, (_, d) => ((i * (d + 3)) % 20) / 20));
+      }
+      const metrics = computeAllMetrics(points6D);
+      expect(metrics.coverage).toBeGreaterThan(0);
+    });
+  });
+
+  describe('adaptiveEpsilon', () => {
+    it('should return ~0.2 for 2D (backward compatible)', () => {
+      const eps = adaptiveEpsilon(2);
+      expect(eps).toBeCloseTo(0.2, 5);
+    });
+
+    it('should increase epsilon as dimensions increase', () => {
+      const eps2 = adaptiveEpsilon(2);
+      const eps3 = adaptiveEpsilon(3);
+      const eps6 = adaptiveEpsilon(6);
+      const eps10 = adaptiveEpsilon(10);
+      expect(eps3).toBeGreaterThan(eps2);
+      expect(eps6).toBeGreaterThan(eps3);
+      expect(eps10).toBeGreaterThan(eps6);
+    });
+
+    it('should produce ~0.54 for 6D', () => {
+      const eps = adaptiveEpsilon(6);
+      expect(eps).toBeCloseTo(0.54, 1);
+    });
+
+    it('should respect custom reference epsilon', () => {
+      const eps = adaptiveEpsilon(2, 0.3);
+      expect(eps).toBeCloseTo(0.3, 5);
+    });
+  });
+
+  describe('6D adaptive coverage', () => {
+    it('well-distributed 6D points should have coverage > 0', () => {
+      // Generate a spread of 6D points
+      const points: number[][] = [];
+      for (let i = 0; i < 30; i++) {
+        points.push(Array.from({ length: 6 }, (_, d) => ((i * (d + 2) * 7) % 30) / 30));
+      }
+      // Use default adaptive epsilon (no explicit epsilon)
+      const coverage = computeCoverage(points);
+      expect(coverage).toBeGreaterThan(0);
+    });
+
+    it('explicit epsilon should still override adaptive', () => {
+      const points = [
+        [0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+      ];
+      // Tiny epsilon → near-zero coverage
+      const coverage = computeCoverage(points, 0.001, 100);
+      expect(coverage).toBeLessThan(0.1);
     });
   });
 });
