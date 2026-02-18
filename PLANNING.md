@@ -53,6 +53,11 @@
   - `convexHullVolume` 가중치 0.15→0.20, `meanPairwiseDistance` 0.20→0.15 교환
   - Optimizer에서 `convexHullVolume >= 0.5` 및 정규화 `meanPairwiseDistance >= 0.5` 미충족 시 재생성
   - `maxRetries` 기본값 2→5
+- [x] Coverage 메트릭 차원 적응형 epsilon 적용
+  - `adaptiveEpsilon(d)`: 2D epsilon=0.2의 부피 비율(~12.6%)을 모든 차원에서 유지
+  - Lanczos 근사법 `logGamma` 헬퍼 추가
+  - `computeCoverage()` epsilon 파라미터를 optional로 변경 (생략 시 자동 적응)
+  - 6D에서 coverage > 0 생성 확인 테스트 추가
 
 ---
 

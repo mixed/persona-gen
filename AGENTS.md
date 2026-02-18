@@ -242,7 +242,7 @@ interface OptimizerResult { population: Population; iterations: number; bestScor
 
 | 파일 | 역할 |
 |------|------|
-| `metrics.ts` | 6가지 다양성 메트릭 함수 + `computeAllMetrics()` (섹션 9 참조) |
+| `metrics.ts` | 6가지 다양성 메트릭 함수 + `computeAllMetrics()` + `adaptiveEpsilon()` (섹션 9 참조) |
 | `embedding.ts` | `getPersonaPoints()`: 좌표 기반(기본) / API 임베딩(고급) 모드 |
 | `questionnaire.ts` | `QuestionnaireGenerator`: 설문 생성 (LLM + `questionnaireSchema`). `PersonaResponder`: 페르소나별 응답 시뮬레이션 (LLM + `personaResponseSchema`). `analyzeResponseDiversity()`: 응답 다양성 분석 |
 
@@ -377,7 +377,7 @@ persona-gen inspect <file>
 
 | 메트릭 | 최적 방향 | 의미 |
 |--------|----------|------|
-| Coverage (Monte Carlo) | ↑ 높을수록 좋음 | 공간에 랜덤 포인트를 뿌렸을 때 가까운 페르소나가 있는 비율 |
+| Coverage (Monte Carlo) | ↑ 높을수록 좋음 | 공간에 랜덤 포인트를 뿌렸을 때 가까운 페르소나가 있는 비율. **차원 적응형 epsilon** 사용 |
 | Convex Hull Volume | ↑ 높을수록 좋음 | 점들이 감싸는 볼록 껍질의 부피 |
 | Mean Pairwise Distance | ↑ 높을수록 좋음 | 모든 페르소나 쌍 간 평균 거리 |
 | Min Pairwise Distance | ↑ 높을수록 좋음 | 가장 가까운 두 페르소나 간 거리 (중복 방지) |
@@ -385,6 +385,12 @@ persona-gen inspect <file>
 | KL Divergence | ↓ 낮을수록 좋음 | 균등분포와의 차이 (편향 정도) |
 
 `computeAllMetrics(points)` → 6가지 + `overall` 가중 종합 점수.
+
+**적응형 epsilon (`adaptiveEpsilon`):**
+Coverage의 epsilon이 고정(0.2)이면 고차원(6D+)에서 epsilon-ball 부피가 0에 수렴한다. `adaptiveEpsilon(d)`는 2D에서 epsilon=0.2일 때의 부피 비율(~12.6%)을 모든 차원에서 유지하도록 자동 조절한다.
+- 공식: `epsilon_d = (π × ref² × Γ(d/2+1) / π^(d/2))^(1/d)`
+- 2D→0.200, 3D→0.311, 6D→0.538, 10D→0.740
+- `computeCoverage()`에 epsilon을 생략하면 자동 적용. 명시적 epsilon 전달 시 기존 동작 유지
 
 **overall 가중치:** coverage(0.20), convexHullVolume(0.20), meanPairwiseDistance(0.15), minPairwiseDistance(0.15), dispersion(0.15), klDivergence(0.15) = 1.0
 
