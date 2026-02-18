@@ -13,7 +13,7 @@ const DEFAULT_OPTIMIZER_CONFIG = {
   evaluateAfter: true,
   language: 'en',
   scoreThreshold: 0.5,
-  maxRetries: 2,
+  maxRetries: 5,
 };
 
 /**
@@ -47,6 +47,7 @@ export class SimpleOptimizer {
       });
 
       const score = population.metrics?.overall ?? 0;
+      const metrics = population.metrics;
 
       // Track best result
       if (score > bestScore) {
@@ -54,8 +55,15 @@ export class SimpleOptimizer {
         bestPopulation = population;
       }
 
-      // Early exit if score is good enough
-      if (score >= scoreThreshold) {
+      // Check individual metric thresholds (normalized)
+      const dims = population.personas[0]?.coordinates.length ?? 1;
+      const maxDist = Math.sqrt(dims);
+      const normMeanPairwise = (metrics?.meanPairwiseDistance ?? 0) / maxDist;
+      const meetsIndividual = (metrics?.convexHullVolume ?? 0) >= 0.5
+        && normMeanPairwise >= 0.5;
+
+      // Early exit if overall score and individual metrics are good enough
+      if (score >= scoreThreshold && meetsIndividual) {
         break;
       }
     }

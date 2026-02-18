@@ -262,8 +262,8 @@ export function computeAllMetrics(points: number[][]): DiversityMetrics {
   // Compute weighted overall score
   const overall =
     coverage * 0.2 +
-    convexHullVolume * 0.15 +
-    normMeanPairwise * 0.2 +
+    convexHullVolume * 0.2 +
+    normMeanPairwise * 0.15 +
     normMinPairwise * 0.15 +
     normDispersion * 0.15 +
     normKL * 0.15;
