@@ -1,6 +1,8 @@
 import fs from 'fs';
 import { JSONRenderer } from '../../output/json.js';
 import { computeAllMetrics } from '../../evaluation/metrics.js';
+import { getPersonaPoints } from '../../evaluation/embedding.js';
+import { OpenAIProvider } from '../../llm/openai.js';
 import { printMetrics, printError } from '../utils.js';
 import { loadPopulationFile, PopulationLoadError } from '../population-loader.js';
 
@@ -28,11 +30,21 @@ export async function evaluateCommand(
   console.log(`\n📊 Evaluating population: ${filePath}`);
   console.log(`   Personas: ${population.personas.length}`);
   console.log(`   Axes: ${population.axes.length}`);
+  console.log(`   Embedding mode: ${options.embeddingMode}`);
 
-  // Extract coordinates
-  const points = population.personas.map((p) =>
-    p.coordinates.map((c) => c.rawValue)
-  );
+  // Extract points based on embedding mode
+  let points: number[][];
+  if (options.embeddingMode === 'api') {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      printError('OPENAI_API_KEY environment variable is required for API embedding mode');
+      process.exit(1);
+    }
+    const provider = new OpenAIProvider({ apiKey });
+    points = await getPersonaPoints(population.personas, 'api', provider);
+  } else {
+    points = await getPersonaPoints(population.personas, 'coordinate');
+  }
 
   // Compute metrics
   const metrics = computeAllMetrics(points);
