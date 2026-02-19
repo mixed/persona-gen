@@ -222,8 +222,15 @@ function isInsideConvexHull(
 }
 
 /**
- * Compute convex hull volume as a fraction of the unit hypercube [0,1]^d
- * using Monte Carlo sampling with Frank-Wolfe hull membership test.
+ * Compute convex hull spread as the d-th root of the MC volume fraction.
+ *
+ * Raw hull volume in [0,1]^d shrinks exponentially with dimension
+ * (25 points in 6D → ~0.5% of unit hypercube). Taking the d-th root
+ * converts to a "characteristic side length" — the side of an
+ * equivalent hypercube with the same volume — which stays meaningful
+ * across all dimensions.
+ *
+ * Returns a value in [0, 1]: 1 = hull fills the entire unit hypercube.
  */
 export function computeConvexHullVolume(
   points: number[][],
@@ -245,7 +252,11 @@ export function computeConvexHullVolume(
     }
   }
 
-  return insideCount / numTestPoints;
+  const rawVolume = insideCount / numTestPoints;
+  if (rawVolume === 0) return 0;
+
+  // d-th root: convert volume to characteristic side length
+  return Math.pow(rawVolume, 1 / dimensions);
 }
 
 /**

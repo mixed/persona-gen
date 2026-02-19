@@ -382,7 +382,7 @@ persona-gen inspect <file>
 | 메트릭 | 최적 방향 | 의미 |
 |--------|----------|------|
 | Coverage (Monte Carlo) | ↑ 높을수록 좋음 | 공간에 랜덤 포인트를 뿌렸을 때 가까운 페르소나가 있는 비율. **차원 적응형 epsilon** 사용 |
-| Convex Hull Volume (MC + Away-Step Frank-Wolfe) | ↑ 높을수록 좋음 | Monte Carlo 샘플(기본 5000개)을 뿌리고 Away-Step Frank-Wolfe 알고리즘으로 볼록 껍질 내부 판정하여 부피 비율 추정 |
+| Convex Hull Volume (MC + Away-Step Frank-Wolfe) | ↑ 높을수록 좋음 | MC 샘플(5000개) + Away-Step Frank-Wolfe 내부 판정 → `V^(1/d)` 정규화 (characteristic spread). 고차원에서도 유의미한 값 산출 |
 | Mean Pairwise Distance | ↑ 높을수록 좋음 | 모든 페르소나 쌍 간 평균 거리 |
 | Min Pairwise Distance | ↑ 높을수록 좋음 | 가장 가까운 두 페르소나 간 거리 (중복 방지) |
 | Dispersion | ↓ 낮을수록 좋음 | 가장 큰 빈 영역의 반경 |

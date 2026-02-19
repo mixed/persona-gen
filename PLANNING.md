@@ -65,6 +65,9 @@
   - `isInsideConvexHull()`: Away-Step Frank-Wolfe 알고리즘으로 선형 수렴 볼록 껍질 내부 판정
   - `computeConvexHullVolume()`: MC 샘플링으로 부피 비율 추정
 - [x] ConvexHullVolume MC 샘플 수 1000 → 5000 인상 (실측 기반 정확도 최적값)
+- [x] ConvexHullVolume `V^(1/d)` 정규화 (characteristic spread)
+  - 고차원 curse of dimensionality 해결: 25점 6D 원시 부피 ~0.005 → d-th root ~0.43
+  - 등가 hypercube 변 길이로 변환하여 차원 무관하게 유의미한 [0,1] 값 산출
 
 ---
 
