@@ -44,6 +44,7 @@ export {
   adaptiveEpsilon,
 } from './evaluation/metrics.js';
 export { getPersonaPoints, type EmbeddingMode } from './evaluation/embedding.js';
+export { pcaReduce, minMaxNormalize } from './evaluation/pca.js';
 
 // Output
 export { MarkdownRenderer } from './output/markdown.js';

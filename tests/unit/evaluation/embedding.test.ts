@@ -44,11 +44,12 @@ describe('getPersonaPoints', () => {
   });
 
   describe('api mode', () => {
-    it('should call llm.embed() with persona descriptions', async () => {
+    it('should call llm.embed() and return PCA+normalized points', async () => {
+      // Return high-dimensional embeddings like a real API
       const mockEmbeddings = [
-        [0.01, 0.02],
-        [0.03, 0.04],
-        [0.05, 0.06],
+        Array.from({ length: 32 }, (_, i) => Math.sin(1 * (i + 1) * 0.1) * 0.05),
+        Array.from({ length: 32 }, (_, i) => Math.sin(2 * (i + 1) * 0.1) * 0.05),
+        Array.from({ length: 32 }, (_, i) => Math.sin(3 * (i + 1) * 0.1) * 0.05),
       ];
       const mockLLM: LLMProvider = {
         name: 'mock',
@@ -64,7 +65,42 @@ describe('getPersonaPoints', () => {
         'Persona B description',
         'Persona C description',
       ]);
-      expect(points).toEqual(mockEmbeddings);
+
+      // Should be PCA-reduced to default 6 dims (but n=3, so effective=2, rest 0.5)
+      expect(points).toHaveLength(3);
+      for (const p of points) {
+        expect(p).toHaveLength(6);
+        for (const v of p) {
+          expect(v).toBeGreaterThanOrEqual(0);
+          expect(v).toBeLessThanOrEqual(1);
+        }
+      }
+    });
+
+    it('should respect targetDims parameter', async () => {
+      const mockEmbeddings = Array.from({ length: 5 }, (_, i) =>
+        Array.from({ length: 32 }, (_, j) => Math.sin((i + 1) * (j + 1) * 0.1) * 0.05)
+      );
+      const fivePersonas = Array.from({ length: 5 }, (_, i) =>
+        makePersona([0.1 * (i + 1)], `Persona ${i}`)
+      );
+      const mockLLM: LLMProvider = {
+        name: 'mock',
+        chat: vi.fn(),
+        chatJSON: vi.fn(),
+        embed: vi.fn().mockResolvedValue(mockEmbeddings),
+      };
+
+      const points = await getPersonaPoints(fivePersonas, 'api', mockLLM, 3);
+
+      expect(points).toHaveLength(5);
+      for (const p of points) {
+        expect(p).toHaveLength(3);
+        for (const v of p) {
+          expect(v).toBeGreaterThanOrEqual(0);
+          expect(v).toBeLessThanOrEqual(1);
+        }
+      }
     });
 
     it('should throw error when llm is not provided', async () => {

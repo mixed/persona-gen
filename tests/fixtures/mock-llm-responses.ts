@@ -151,11 +151,11 @@ export class MockLLMProvider implements LLMProvider {
       throw error;
     }
 
-    // Return mock embeddings (random-ish but deterministic based on text length)
+    // Return mock embeddings: 64D with realistic range [-0.05, 0.05]
     return texts.map((text) => {
       const seed = text.length;
-      return Array.from({ length: 8 }, (_, i) =>
-        Math.sin(seed * (i + 1)) * 0.5 + 0.5
+      return Array.from({ length: 64 }, (_, i) =>
+        Math.sin(seed * (i + 1) * 0.1) * 0.05
       );
     });
   }

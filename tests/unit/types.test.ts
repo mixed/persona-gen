@@ -181,7 +181,7 @@ describe('MockLLMProvider', () => {
     const provider = new MockLLMProvider();
     const embeddings = await provider.embed!(['hello', 'world']);
     expect(embeddings).toHaveLength(2);
-    expect(embeddings[0]).toHaveLength(8);
+    expect(embeddings[0]).toHaveLength(64);
   });
 
   it('should reset call count', async () => {

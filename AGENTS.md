@@ -107,6 +107,7 @@ persona-gen-claude/
 │   ├── evaluation/                 # 다양성 평가
 │   │   ├── metrics.ts              # 6가지 메트릭 + computeAllMetrics()
 │   │   ├── embedding.ts            # 좌표 기반 / API 임베딩 포인트 추출
+│   │   ├── pca.ts                  # PCA 차원축소 (API 임베딩용)
 │   │   └── questionnaire.ts        # 설문 생성 + 페르소나 응답 시뮬레이션
 │   │
 │   ├── evolution/                  # 간소화 AlphaEvolve
@@ -146,6 +147,8 @@ persona-gen-claude/
 │   │   │   └── persona-expander.test.ts
 │   │   ├── evaluation/
 │   │   │   ├── metrics.test.ts
+│   │   │   ├── embedding.test.ts
+│   │   │   ├── pca.test.ts
 │   │   │   └── questionnaire.test.ts
 │   │   ├── evolution/
 │   │   │   └── optimizer.test.ts
@@ -244,6 +247,7 @@ interface OptimizerResult { population: Population; iterations: number; bestScor
 |------|------|
 | `metrics.ts` | 6가지 다양성 메트릭 함수 + `computeAllMetrics()` + `adaptiveEpsilon()` (섹션 9 참조) |
 | `embedding.ts` | `getPersonaPoints()`: 좌표 기반(기본) / API 임베딩(고급) 모드 |
+| `pca.ts` | `PCA` 클래스: API 임베딩 고차원 벡터를 축 수 차원으로 PCA 차원축소 + min-max 정규화 → [0,1]^d |
 | `questionnaire.ts` | `QuestionnaireGenerator`: 설문 생성 (LLM + `questionnaireSchema`). `PersonaResponder`: 페르소나별 응답 시뮬레이션 (LLM + `personaResponseSchema`). `analyzeResponseDiversity()`: 응답 다양성 분석 |
 
 ### 5.5 Evolution (`src/evolution/`)
@@ -378,7 +382,7 @@ persona-gen inspect <file>
 | 메트릭 | 최적 방향 | 의미 |
 |--------|----------|------|
 | Coverage (Monte Carlo) | ↑ 높을수록 좋음 | 공간에 랜덤 포인트를 뿌렸을 때 가까운 페르소나가 있는 비율. **차원 적응형 epsilon** 사용 |
-| Convex Hull Volume | ↑ 높을수록 좋음 | 점들이 감싸는 볼록 껍질의 부피 |
+| Convex Hull Volume (MC + Away-Step Frank-Wolfe) | ↑ 높을수록 좋음 | Monte Carlo 샘플(기본 5000개)을 뿌리고 Away-Step Frank-Wolfe 알고리즘으로 볼록 껍질 내부 판정하여 부피 비율 추정 |
 | Mean Pairwise Distance | ↑ 높을수록 좋음 | 모든 페르소나 쌍 간 평균 거리 |
 | Min Pairwise Distance | ↑ 높을수록 좋음 | 가장 가까운 두 페르소나 간 거리 (중복 방지) |
 | Dispersion | ↓ 낮을수록 좋음 | 가장 큰 빈 영역의 반경 |
@@ -396,7 +400,7 @@ Coverage의 epsilon이 고정(0.2)이면 고차원(6D+)에서 epsilon-ball 부�
 
 **임베딩 모드:**
 - **좌표 기반** (기본): 페르소나의 quasi-random 좌표를 직접 사용. 비용 0, 결정론적
-- **API 임베딩** (고급): description을 `text-embedding-3-small`로 임베딩. 텍스트 수준 다양성 측정
+- **API 임베딩** (고급): description을 `text-embedding-3-small`로 임베딩 → PCA로 축 수 차원까지 차원축소 → min-max 정규화하여 [0,1]^d 공간에 매핑. 텍스트 수준 다양성 측정
 
 ---
 

@@ -95,7 +95,7 @@ export class Pipeline {
     // Step 6: Optionally compute metrics (using API embeddings)
     let metrics: DiversityMetrics | undefined;
     if (finalConfig.evaluateAfter) {
-      metrics = await this.evaluate(personas);
+      metrics = await this.evaluate(personas, axes.length);
     }
 
     return {
@@ -131,8 +131,8 @@ export class Pipeline {
   /**
    * Compute diversity metrics for a set of personas using API embeddings.
    */
-  async evaluate(personas: EvaluablePersona[]): Promise<DiversityMetrics> {
-    const points = await getPersonaPoints(personas as Persona[], 'api', this.llm);
+  async evaluate(personas: EvaluablePersona[], targetDims?: number): Promise<DiversityMetrics> {
+    const points = await getPersonaPoints(personas as Persona[], 'api', this.llm, targetDims);
     return computeAllMetrics(points);
   }
 }

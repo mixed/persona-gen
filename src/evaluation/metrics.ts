@@ -101,10 +101,134 @@ export function computeCoverage(
 }
 
 /**
- * Compute approximate convex hull volume using Monte Carlo method.
- * This is a simplified approximation - true convex hull computation is complex in high dimensions.
+ * Check if a point lies inside the convex hull of a set of points
+ * using the Away-Step Frank-Wolfe algorithm. Unlike standard Frank-Wolfe
+ * (O(1/t) convergence), this variant achieves linear convergence by
+ * maintaining an explicit active set of vertices and their weights.
  */
-export function computeConvexHullVolume(points: number[][]): number {
+function isInsideConvexHull(
+  point: number[],
+  hullPoints: number[][],
+  maxIter: number = 100,
+  tol: number = 1e-10
+): boolean {
+  const n = hullPoints.length;
+  const d = point.length;
+
+  // Find closest vertex as starting point
+  let bestIdx = 0;
+  let bestDistSq = 0;
+  for (let j = 0; j < d; j++) bestDistSq += (hullPoints[0][j] - point[j]) ** 2;
+
+  for (let i = 1; i < n; i++) {
+    let distSq = 0;
+    for (let j = 0; j < d; j++) distSq += (hullPoints[i][j] - point[j]) ** 2;
+    if (distSq < bestDistSq) {
+      bestDistSq = distSq;
+      bestIdx = i;
+    }
+  }
+
+  if (bestDistSq < tol) return true;
+
+  // Active set: vertex weights (only track non-zero entries)
+  const alpha = new Float64Array(n);
+  alpha[bestIdx] = 1.0;
+  const current = [...hullPoints[bestIdx]];
+
+  for (let iter = 0; iter < maxIter; iter++) {
+    // gradient direction g = current - point (factor of 2 cancels in line search)
+
+    // Forward vertex: argmin_i <g, p_i>
+    let fwIdx = 0;
+    let fwDot = 0;
+    for (let j = 0; j < d; j++) fwDot += (current[j] - point[j]) * hullPoints[0][j];
+    for (let i = 1; i < n; i++) {
+      let dot = 0;
+      for (let j = 0; j < d; j++) dot += (current[j] - point[j]) * hullPoints[i][j];
+      if (dot < fwDot) { fwDot = dot; fwIdx = i; }
+    }
+
+    // Away vertex: argmax_{i: α_i > 0} <g, p_i>
+    let awIdx = -1;
+    let awDot = -Infinity;
+    for (let i = 0; i < n; i++) {
+      if (alpha[i] < 1e-14) continue;
+      let dot = 0;
+      for (let j = 0; j < d; j++) dot += (current[j] - point[j]) * hullPoints[i][j];
+      if (dot > awDot) { awDot = dot; awIdx = i; }
+    }
+
+    // FW duality gap: <g, x - v_fw>
+    let gCurrent = 0;
+    for (let j = 0; j < d; j++) gCurrent += (current[j] - point[j]) * current[j];
+    const fwGap = gCurrent - fwDot;
+
+    if (fwGap < tol) break; // converged
+
+    const awGap = awDot - gCurrent;
+    const useForward = fwGap >= awGap;
+
+    // Line search along chosen direction
+    let num = 0;
+    let den = 0;
+    let maxGamma: number;
+
+    if (useForward) {
+      // direction = v_fw - current
+      for (let j = 0; j < d; j++) {
+        const dj = hullPoints[fwIdx][j] - current[j];
+        num += (current[j] - point[j]) * dj;
+        den += dj * dj;
+      }
+      maxGamma = 1.0;
+    } else {
+      // direction = current - v_aw
+      for (let j = 0; j < d; j++) {
+        const dj = current[j] - hullPoints[awIdx][j];
+        num += (current[j] - point[j]) * dj;
+        den += dj * dj;
+      }
+      maxGamma = alpha[awIdx] / (1 - alpha[awIdx]);
+    }
+
+    if (den < 1e-15) break;
+    const gamma = Math.max(0, Math.min(maxGamma, -num / den));
+    if (gamma < 1e-15) break;
+
+    // Update current point and weights
+    if (useForward) {
+      for (let j = 0; j < d; j++) {
+        current[j] = (1 - gamma) * current[j] + gamma * hullPoints[fwIdx][j];
+      }
+      for (let i = 0; i < n; i++) alpha[i] *= (1 - gamma);
+      alpha[fwIdx] += gamma;
+    } else {
+      for (let j = 0; j < d; j++) {
+        current[j] = (1 + gamma) * current[j] - gamma * hullPoints[awIdx][j];
+      }
+      for (let i = 0; i < n; i++) alpha[i] *= (1 + gamma);
+      alpha[awIdx] -= gamma;
+    }
+
+    let distSq = 0;
+    for (let j = 0; j < d; j++) distSq += (current[j] - point[j]) ** 2;
+    if (distSq < tol) return true;
+  }
+
+  let distSq = 0;
+  for (let j = 0; j < d; j++) distSq += (current[j] - point[j]) ** 2;
+  return distSq < tol;
+}
+
+/**
+ * Compute convex hull volume as a fraction of the unit hypercube [0,1]^d
+ * using Monte Carlo sampling with Frank-Wolfe hull membership test.
+ */
+export function computeConvexHullVolume(
+  points: number[][],
+  numTestPoints: number = 5000
+): number {
   if (points.length < 2) return 0;
 
   const dimensions = points[0].length;
@@ -113,35 +237,15 @@ export function computeConvexHullVolume(points: number[][]): number {
   const uniquePoints = filterUniquePoints(points);
   if (uniquePoints.length < 2) return 0;
 
-  // Compute bounding box
-  const mins = Array(dimensions).fill(Infinity);
-  const maxs = Array(dimensions).fill(-Infinity);
-
-  for (const point of uniquePoints) {
-    for (let d = 0; d < dimensions; d++) {
-      mins[d] = Math.min(mins[d], point[d]);
-      maxs[d] = Math.max(maxs[d], point[d]);
+  let insideCount = 0;
+  for (let i = 0; i < numTestPoints; i++) {
+    const testPoint = randomPoint(dimensions);
+    if (isInsideConvexHull(testPoint, uniquePoints)) {
+      insideCount++;
     }
   }
 
-  // Check if any dimension has zero range (collinear/degenerate)
-  let boxVolume = 1;
-  let zeroRangeCount = 0;
-  for (let d = 0; d < dimensions; d++) {
-    const range = maxs[d] - mins[d];
-    if (range < 0.001) {
-      zeroRangeCount++;
-    }
-    boxVolume *= range;
-  }
-
-  // If more than one dimension has zero range, volume is 0
-  if (zeroRangeCount >= dimensions - 1) return 0;
-
-  // For simplicity, return normalized bounding box volume
-  // (True convex hull would be smaller, but this is a reasonable approximation)
-  // Normalize to [0, 1] range (unit hypercube has volume 1)
-  return Math.min(boxVolume, 1);
+  return insideCount / numTestPoints;
 }
 
 /**

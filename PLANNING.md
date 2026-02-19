@@ -58,6 +58,13 @@
   - Lanczos 근사법 `logGamma` 헬퍼 추가
   - `computeCoverage()` epsilon 파라미터를 optional로 변경 (생략 시 자동 적응)
   - 6D에서 coverage > 0 생성 확인 테스트 추가
+- [x] API 임베딩 PCA 차원축소 + min-max 정규화
+  - `src/evaluation/pca.ts`: PCA 클래스 (공분산 행렬 → 고유벡터 → 투영 → [0,1] 정규화)
+  - `embedding.ts`에서 API 임베딩 후 PCA 파이프라인 적용
+- [x] ConvexHullVolume: bbox 방식 → MC + Away-Step Frank-Wolfe
+  - `isInsideConvexHull()`: Away-Step Frank-Wolfe 알고리즘으로 선형 수렴 볼록 껍질 내부 판정
+  - `computeConvexHullVolume()`: MC 샘플링으로 부피 비율 추정
+- [x] ConvexHullVolume MC 샘플 수 1000 → 5000 인상 (실측 기반 정확도 최적값)
 
 ---
 

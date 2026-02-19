@@ -47,7 +47,7 @@ export async function evaluateCommand(
   if (effectiveMode === 'api') {
     const apiKey = process.env.OPENAI_API_KEY!;
     const provider = new OpenAIProvider({ apiKey });
-    points = await getPersonaPoints(population.personas, 'api', provider);
+    points = await getPersonaPoints(population.personas, 'api', provider, population.axes.length);
   } else {
     points = await getPersonaPoints(population.personas, 'coordinate');
   }
