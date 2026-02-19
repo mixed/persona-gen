@@ -62,6 +62,22 @@ export function adaptiveEpsilon(dimensions: number, referenceEpsilon: number = 0
 }
 
 /**
+ * Compute the expected minimum pairwise distance for n uniform random points
+ * in [0, 1]^d using Weibull extreme value statistics.
+ *
+ * E[min_pair] = Γ(1 + 1/d) / (C(n,2) × V_d)^(1/d)
+ * where V_d = π^(d/2) / Γ(d/2+1), C(n,2) = n(n-1)/2
+ */
+export function expectedMinPairwiseDistance(n: number, d: number): number {
+  if (n < 2 || d < 1) return 0;
+  const logM = Math.log(n) + Math.log(n - 1) - Math.log(2);
+  const logVd = (d / 2) * Math.log(Math.PI) - logGamma(d / 2 + 1);
+  const logNumerator = logGamma(1 + 1 / d);
+  const logDenominator = (logM + logVd) / d;
+  return Math.exp(logNumerator - logDenominator);
+}
+
+/**
  * Generate a random point in [0, 1]^d space.
  */
 function randomPoint(dimensions: number): number[] {
@@ -416,7 +432,13 @@ export function computeAllMetrics(points: number[][]): DiversityMetrics {
   const dimensions = points[0].length;
   const maxDistance = Math.sqrt(dimensions);
   const normMeanPairwise = meanPairwiseDistance / maxDistance;
-  const normMinPairwise = minPairwiseDistance / maxDistance;
+
+  // Normalize minPairwise using expected value from Weibull statistics
+  // Dividing by 2×E[min_pair] maps random expectation to 0.5; Halton → ~0.65
+  const expectedMin = expectedMinPairwiseDistance(points.length, dimensions);
+  const normMinPairwise = expectedMin > 0
+    ? Math.min(minPairwiseDistance / (2 * expectedMin), 1)
+    : minPairwiseDistance / maxDistance;
 
   // Invert dispersion (lower is better, so 1 - normalized)
   const normDispersion = 1 - Math.min(dispersion / maxDistance, 1);

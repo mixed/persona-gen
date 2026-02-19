@@ -7,7 +7,7 @@ export interface OptimizerConfig extends Partial<GeneratorConfig> {
 }
 
 const DEFAULT_OPTIMIZER_CONFIG = {
-  populationSize: 25,
+  populationSize: 40,
   numAxes: 6,
   samplerType: 'halton' as const,
   evaluateAfter: true,

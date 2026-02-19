@@ -42,6 +42,7 @@ export {
   computeKLDivergence,
   computeAllMetrics,
   adaptiveEpsilon,
+  expectedMinPairwiseDistance,
 } from './evaluation/metrics.js';
 export { getPersonaPoints, type EmbeddingMode } from './evaluation/embedding.js';
 export { pcaReduce, minMaxNormalize } from './evaluation/pca.js';

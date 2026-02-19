@@ -20,7 +20,7 @@ program
   .command('generate')
   .description('Generate a population of diverse personas')
   .argument('<context>', 'Context description for persona generation')
-  .option('-n, --count <number>', 'Number of personas to generate', '25')
+  .option('-n, --count <number>', 'Number of personas to generate', '40')
   .option('-a, --axes <number>', 'Number of diversity axes to extract', '6')
   .option('--axes-file <path>', 'Path to custom axes definition JSON file')
   .option('-m, --model <string>', 'LLM model to use', 'gpt-4o-mini')
@@ -30,6 +30,7 @@ program
   .option('-l, --language <lang>', 'Output language: en or ko', 'en')
   .option('-e, --evaluate', 'Run diversity evaluation after generation', false)
   .option('--concurrency <n>', 'LLM parallel call limit', '5')
+  .option('--retries <n>', 'Retry generation if diversity is low (0 = no retry)', '0')
   .option('--verbose', 'Show detailed progress', false)
   .option('--dry-run', 'Show sampling without LLM calls', false)
   .action(async (context: string, options: Record<string, string | boolean>) => {
@@ -44,6 +45,7 @@ program
       language: options.language as string,
       evaluate: options.evaluate as boolean,
       concurrency: parseInt(options.concurrency as string, 10),
+      retries: parseInt(options.retries as string, 10),
       verbose: options.verbose as boolean,
       dryRun: options.dryRun as boolean,
     };

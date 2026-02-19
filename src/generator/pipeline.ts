@@ -23,7 +23,7 @@ export interface PipelineOptions {
 }
 
 const DEFAULT_CONFIG: GeneratorConfig = {
-  populationSize: 25,
+  populationSize: 40,
   numAxes: 6,
   samplerType: 'halton',
   evaluateAfter: false,

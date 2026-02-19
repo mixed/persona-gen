@@ -1,10 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 import { Pipeline } from '../../generator/pipeline.js';
+import { SimpleOptimizer } from '../../evolution/optimizer.js';
 import { OpenAIProvider } from '../../llm/openai.js';
 import { MarkdownRenderer } from '../../output/markdown.js';
 import { JSONRenderer } from '../../output/json.js';
-import type { GeneratorConfig, DiversityAxis } from '../../types.js';
+import type { GeneratorConfig, DiversityAxis, Population } from '../../types.js';
 import {
   printHeader,
   printConfig,
@@ -25,6 +26,7 @@ export interface GenerateOptions {
   language: string;
   evaluate: boolean;
   concurrency: number;
+  retries: number;
   verbose: boolean;
   dryRun: boolean;
 }
@@ -91,11 +93,18 @@ export async function generateCommand(
       populationSize: options.count,
       numAxes: options.axes,
       customAxes,
-      evaluateAfter: options.evaluate,
+      evaluateAfter: options.retries > 0 ? true : options.evaluate,
       language: options.language,
     };
 
-    const population = await pipeline.generate(context, config);
+    let population: Population;
+    if (options.retries > 0) {
+      const optimizer = new SimpleOptimizer(pipeline);
+      const result = await optimizer.optimize(context, { ...config, maxRetries: options.retries });
+      population = result.population;
+    } else {
+      population = await pipeline.generate(context, config);
+    }
 
     spinner.succeed('Generation complete');
 

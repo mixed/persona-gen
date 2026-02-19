@@ -351,7 +351,7 @@ LLM이 배열 대신 `{ "axes": [...] }` 형태로 감싸서 응답할 때 자�
 ```bash
 # 페르소나 생성
 persona-gen generate <context> \
-  -n, --count <number>       # 생성 수 (기본 25)
+  -n, --count <number>       # 생성 수 (기본 40)
   -a, --axes <number>        # 축 수 (기본 6)
   --axes-file <path>         # 커스텀 축 JSON
   -m, --model <string>       # LLM 모델 (기본 gpt-4o-mini)
@@ -359,6 +359,7 @@ persona-gen generate <context> \
   -f, --format <md|json>     # 출력 형식 (기본 md)
   -l, --language <en|ko>     # 출력 언어 (기본 en)
   -e, --evaluate             # 다양성 평가 포함
+  --retries <n>              # 다양성 낮으면 재시도 (기본 0 = 재시도 없음)
   --sampler <halton>         # 샘플러 (기본 halton)
   --concurrency <n>          # LLM 병렬 호출 수 (기본 5)
   --verbose                  # 상세 출력
@@ -402,6 +403,33 @@ Coverage의 epsilon이 고정(0.2)이면 고차원(6D+)에서 epsilon-ball 부�
 - **좌표 기반** (기본): 페르소나의 quasi-random 좌표를 직접 사용. 비용 0, 결정론적
 - **API 임베딩** (고급): description을 `text-embedding-3-small`로 임베딩 → PCA로 축 수 차원까지 차원축소 → min-max 정규화하여 [0,1]^d 공간에 매핑. 텍스트 수준 다양성 측정
 
+### 9.1 고차원 체크리스트 (Curse of Dimensionality 방지)
+
+이 프로젝트에서 동일한 유형의 고차원 버그가 4회 반복 발생했다. 새 메트릭이나 기하 연산을 추가할 때 반드시 아래를 확인한다.
+
+**근본 원인: 저차원 직관의 암묵적 일반화**
+- 2D/3D에서 "합리적"인 상수·알고리즘이 6D+에서는 완전히 무의미해질 수 있다
+- 부피는 차원에 대해 기하급수적으로 축소된다 (ε-ball, convex hull, 임의의 볼록 영역)
+- 거리는 집중(concentrate)된다 — 고차원에서 점들 간 거리가 평균으로 수렴
+
+**과거 사례:**
+
+| 사건 | 증상 | 원인 | 수정 |
+|------|------|------|------|
+| Coverage ε=0.2 고정 | coverage=0 (6D) | ε-ball 부피 0에 수렴 | `adaptiveEpsilon(d)` — 부피 비율 보존 |
+| ConvexHull bbox 방식 | hull 과대 추정 | 고차원 bbox ≫ hull | MC + Away-Step Frank-Wolfe |
+| API 임베딩 512D | 거리 무의미 | distance concentration | PCA → 6D + min-max 정규화 |
+| ConvexHull 원시 부피 | "0.00" 표시 | 40점 6D hull ≪ 1% | `V^(1/d)` characteristic spread |
+
+**새 메트릭/기하 연산 추가 시 체크리스트:**
+
+1. **상수가 차원에 의존하는가?** — 고정 상수(ε, threshold 등)가 있으면 d에 따라 스케일링 필요 여부 확인
+2. **부피 기반 계산인가?** — 부피는 d에 대해 지수적으로 축소됨. `V^(1/d)` 정규화 또는 부피 비율 보존 공식 적용 고려
+3. **거리 기반 계산인가?** — `sqrt(d)`로 정규화하여 [0,1] 범위 유지. 고차원에서 distance concentration 현상 인지
+4. **MC 샘플링인가?** — 고차원에서 hit rate가 급감. 샘플 수가 충분한지 d=6~10으로 실측
+5. **테스트에 6D 케이스가 있는가?** — 2D 단위 테스트만으로는 부족. 반드시 `d=6, n=40` (실제 사용 조건) 테스트 추가
+6. **결과값이 실제로 유의미한가?** — d=6에서 값이 0.01 미만이면 메트릭 자체의 유용성 재검토
+
 ---
 
 ## 10. 설계 결정
@@ -426,9 +454,9 @@ Coverage의 epsilon이 고정(0.2)이면 고차원(6D+)에서 epsilon-ball 부�
 |------|---------|------|
 | Context Expansion | 1 | < $0.01 |
 | Axis Extraction | 1 | < $0.01 |
-| Persona Expansion (N=25) | 25 | ~$0.05 |
-| Questionnaire (선택) | 25 × 10 | ~$0.10 |
-| **총합 (기본)** | **27** | **~$0.07** |
-| **총합 (설문 포함)** | **277** | **~$0.17** |
+| Persona Expansion (N=40) | 40 | ~$0.08 |
+| Questionnaire (선택) | 40 × 10 | ~$0.16 |
+| **총합 (기본)** | **42** | **~$0.10** |
+| **총합 (설문 포함)** | **442** | **~$0.26** |
 
 GPT-4o 사용 시 약 10~20배.

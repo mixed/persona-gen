@@ -8,6 +8,7 @@ import {
   computeKLDivergence,
   computeAllMetrics,
   adaptiveEpsilon,
+  expectedMinPairwiseDistance,
 } from '../../../src/evaluation/metrics.js';
 
 describe('DiversityMetrics', () => {
@@ -260,6 +261,43 @@ describe('DiversityMetrics', () => {
     it('should respect custom reference epsilon', () => {
       const eps = adaptiveEpsilon(2, 0.3);
       expect(eps).toBeCloseTo(0.3, 5);
+    });
+  });
+
+  describe('expectedMinPairwiseDistance', () => {
+    it('should return ~0.277 for n=25, d=6', () => {
+      const expected = expectedMinPairwiseDistance(25, 6);
+      expect(expected).toBeCloseTo(0.277, 2);
+    });
+
+    it('should return ~0.236 for n=40, d=6', () => {
+      const expected = expectedMinPairwiseDistance(40, 6);
+      expect(expected).toBeCloseTo(0.236, 2);
+    });
+
+    it('should return 0 for n < 2', () => {
+      expect(expectedMinPairwiseDistance(1, 6)).toBe(0);
+      expect(expectedMinPairwiseDistance(0, 6)).toBe(0);
+    });
+
+    it('should return 0 for d < 1', () => {
+      expect(expectedMinPairwiseDistance(10, 0)).toBe(0);
+    });
+
+    it('should decrease as n increases (more points → closer min pair)', () => {
+      const e10 = expectedMinPairwiseDistance(10, 6);
+      const e25 = expectedMinPairwiseDistance(25, 6);
+      const e40 = expectedMinPairwiseDistance(40, 6);
+      expect(e25).toBeLessThan(e10);
+      expect(e40).toBeLessThan(e25);
+    });
+
+    it('should increase as d increases (higher dimensions → more room)', () => {
+      const d2 = expectedMinPairwiseDistance(25, 2);
+      const d6 = expectedMinPairwiseDistance(25, 6);
+      const d10 = expectedMinPairwiseDistance(25, 10);
+      expect(d6).toBeGreaterThan(d2);
+      expect(d10).toBeGreaterThan(d6);
     });
   });
 
